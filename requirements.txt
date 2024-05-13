@@ -1,0 +1,9 @@
+django
+django-cors-headers
+djangorestframework
+django-db-connection-pool[mysql]
+mysqlclient
+python-dateutil
+boto3
+django-filter
+DateTime
