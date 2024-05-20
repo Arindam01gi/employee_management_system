@@ -1,3 +1,9 @@
-from  django.urls import path,include
+from rest_framework import routers
+from django.urls import path, include
+from user.views import *
 
-urls = []
+urls = [
+    path('user/health/', getAdminHealth),
+    path('user/add',addUser)
+
+]
