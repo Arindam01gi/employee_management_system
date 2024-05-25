@@ -22,3 +22,13 @@ class InvalidPhoneEmailFormat(Exception):
     def __init___(self, message):
         super(InvalidPhoneEmailFormat, self).__init__(message)
         self.message = message
+        
+class UserNotExistsException(Exception):
+    def __init___(self, message):
+        super(UserNotExistsException, self).__init__(message)
+        self.message = message
+        
+class InvalidCredentialException(Exception):
+    def __init___(self, message):
+        super(InvalidCredentialException, self).__init__(message)
+        self.message = message

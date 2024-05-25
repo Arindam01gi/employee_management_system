@@ -7,3 +7,4 @@ python-dateutil
 boto3
 django-filter
 DateTime
+djangorestframework-simplejwt

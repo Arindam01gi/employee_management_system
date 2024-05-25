@@ -4,6 +4,7 @@ from user.views import *
 
 urls = [
     path('user/health/', getAdminHealth),
-    path('user/add',addUser)
+    path('user/add/',addUser),
+    path('user/login/',userLogin),
 
 ]

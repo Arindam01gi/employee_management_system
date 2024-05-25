@@ -25,7 +25,13 @@ BE003MESSAGE = '{} Already Exists'
 BE004 = 'BE004'
 BE004MESSAGE = 'Invalid {} Format'
 
+BE005 = 'BE005'
+BE005MESSAGE = 'Invalid Credentials'
+
 """ INFORMATIONAL ERRORS """
 IN001 = 'IN001'
 IN001MESSAGE = 'Operational Error'
+
+IN002 = 'IN002'
+IN002MESSAGE = 'User Does Not Exists'
 
