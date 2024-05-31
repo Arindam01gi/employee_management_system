@@ -20,6 +20,8 @@ class UserDetails(models.Model):
     email = models.CharField(max_length=100,blank=False,null=True)
     phone = models.CharField(max_length=20,blank=False,null=True)
     user_role = models.IntegerField(blank=False,null=True)
+    profile_pic = models.CharField(max_length=255,blank=False,null=True)
+    active = models.IntegerField(default=1,blank=False,null=False)
     created_on = models.DateTimeField(blank=False,null=True)
     updated_on = models.DateTimeField(blank=False,null=True)
 

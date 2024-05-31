@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'user',
     'rest_framework',
     'rest_framework_simplejwt',
+    'shared'
 ]
 
 MIDDLEWARE = [
@@ -186,6 +187,15 @@ LOGGING = {
             'formatter': 'file',
             'delay': False
         },
+        'file_shared': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'shared.log',
+            'maxBytes': 1048570, #020 MB
+            'backupCount': 2,
+            'formatter': 'file',
+            'delay': False
+        },
         'console' : {
             'level' : 'ERROR',
             'class' : 'logging.StreamHandler',
@@ -201,6 +211,11 @@ LOGGING = {
         'user' : {
             'level' : 'DEBUG',
             'handlers' :['file_user'],
+            'propagate' : True,
+        },
+        'shared' : {
+            'level' : 'DEBUG',
+            'handlers' :['file_shared'],
             'propagate' : True,
         }
     }
