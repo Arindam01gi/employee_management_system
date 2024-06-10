@@ -21,6 +21,7 @@ class UserDetails(models.Model):
     phone = models.CharField(max_length=20,blank=False,null=True)
     user_role = models.IntegerField(blank=False,null=True)
     profile_pic = models.CharField(max_length=255,blank=False,null=True)
+    designation = models.CharField(max_length=255,blank=False,null=True)
     active = models.IntegerField(default=1,blank=False,null=False)
     salary = models.BigIntegerField(blank=False,null=True)
     joining_date = models.DateField(blank=False,null=True)
