@@ -75,6 +75,7 @@ def addUser(request):
         profile_pic = data['profile_pic'] if data.get('profile_pic') else None
         salary = data['salary'] if data.get('salary') else None
         joining_date = data['joining_date'] if data.get('joining_date') else None
+        designation = data['designation'] if data.get('designation') else None
 
         if (username is None or username == '') or (password is None or password == '') or (firstname is None or firstname == '') or (phone is None or phone == '') or (email is None or email == '') or(user_role is None or user_role==''):
             raise MandatoryInputMissingException('Mandetory Input Missing')
@@ -128,7 +129,7 @@ def addUser(request):
                 raise InvalidPhoneEmailFormat('Invalid Phone/Email Format')
             
         user_data = {"username": username , "password":passwordmd5}
-        user_details_data = { "firstname":firstname ,"lastname":lastname,"user_role":user_role,"phone":phone,"email":email,"active":1,"profile_pic":profile_pic,"salary":salary,"joining_date":joining_date }
+        user_details_data = { "firstname":firstname ,"lastname":lastname,"user_role":user_role,"phone":phone,"email":email,"active":1,"profile_pic":profile_pic,"salary":salary,"joining_date":joining_date,"designation":designation }
         
         with transaction.atomic():
             logger.info(f"user id == {user_id}")
@@ -252,6 +253,7 @@ def userLogin(request):
                                     ud.phone,
                                     ud.joining_date,
                                     ud.profile_pic,
+                                    ud.designation,
                                     dl.domain_value AS  user_role
                                 FROM user u 
                                 INNER JOIN user_details ud ON u.user_id=ud.user_id
@@ -272,6 +274,7 @@ def userLogin(request):
                     user_role = user_value[0]['user_role']
                     joining_date = user_value[0]['joining_date']
                     profile_pic = user_value[0]['profile_pic']
+                    designation = user_value[0]['designation']
                     
                     
                 input_md5_password = getMd5Hash(password)
@@ -286,7 +289,7 @@ def userLogin(request):
                 refresh = RefreshToken.for_user(User.objects.get(user_id=user_id))
                 access_token = str(refresh.access_token)
                 
-                user_info = {"id":user_id, "name": user_name,"username":username ,"phone":user_phone,"email":user_email,'user_role':user_role, "profile_pic":profile_pic,"joining_date":joining_date, "access_token": access_token,"refresh_token": str(refresh)}
+                user_info = {"id":user_id, "name": user_name,"username":username ,"phone":user_phone,"email":user_email,'user_role':user_role, "profile_pic":profile_pic,"joining_date":joining_date,"designation":designation, "access_token": access_token,"refresh_token": str(refresh)}
                 
                 response_body= {
                     'status': SUCCESSSTATUS,
