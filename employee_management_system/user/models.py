@@ -22,6 +22,8 @@ class UserDetails(models.Model):
     user_role = models.IntegerField(blank=False,null=True)
     profile_pic = models.CharField(max_length=255,blank=False,null=True)
     active = models.IntegerField(default=1,blank=False,null=False)
+    salary = models.BigIntegerField(blank=False,null=True)
+    joining_date = models.DateField(blank=False,null=True)
     created_on = models.DateTimeField(blank=False,null=True)
     updated_on = models.DateTimeField(blank=False,null=True)
 
