@@ -36,3 +36,6 @@ IN001MESSAGE = 'Operational Error'
 IN002 = 'IN002'
 IN002MESSAGE = 'User Does Not Exists'
 
+IN003 = 'IN003'
+IN003MESSAGE = 'User Not Authorised To Perform This Action'
+

@@ -13,6 +13,8 @@ from constant import *
 from errors import *
 from .utils import (getMd5Hash)
 from .models import (UserDetails,User)
+from shared.models import (DomainLookup)
+from .serializers import UserDetailsSerializer
 
 import logging, re, dateutil, hashlib, base64, pytz, math, mimetypes
 import json, sys
@@ -76,8 +78,9 @@ def addUser(request):
         salary = data['salary'] if data.get('salary') else None
         joining_date = data['joining_date'] if data.get('joining_date') else None
         designation = data['designation'] if data.get('designation') else None
+        org_id = data['org_id'] if data.get('org_id') else None
 
-        if (username is None or username == '') or (password is None or password == '') or (firstname is None or firstname == '') or (phone is None or phone == '') or (email is None or email == '') or(user_role is None or user_role==''):
+        if (username is None or username == '') or (password is None or password == '') or (firstname is None or firstname == '') or (phone is None or phone == '') or (email is None or email == '') or(user_role is None or user_role=='') or org_id in(None,''):
             raise MandatoryInputMissingException('Mandetory Input Missing')
         
         if(len(password)<3 or len(password)> 20):
@@ -128,18 +131,20 @@ def addUser(request):
                 phone_email_valid = 2
                 raise InvalidPhoneEmailFormat('Invalid Phone/Email Format')
             
-        user_data = {"username": username , "password":passwordmd5}
-        user_details_data = { "firstname":firstname ,"lastname":lastname,"user_role":user_role,"phone":phone,"email":email,"active":1,"profile_pic":profile_pic,"salary":salary,"joining_date":joining_date,"designation":designation }
+        user_data = {"username": username , "password":passwordmd5,"active":1}
+        user_details_data = { "firstname":firstname ,"lastname":lastname,"user_role":user_role,"phone":phone,"email":email,"profile_pic":profile_pic,"salary":salary,"joining_date":joining_date,"designation":designation,"org_id":org_id }
         
         with transaction.atomic():
             logger.info(f"user id == {user_id}")
             if user_id not in (None,''):
+                logger.info('Updating User Details')
                 user_data['updated_on'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-                user_instance = User.objects.filter(user_id=user_id).update(**user_data)
+                User.objects.filter(user_id=user_id).update(**user_data)
+                user_instance = User.objects.filter(user_id=user_id).get()
                 user_details_data['user'] = user_instance
                 user_details_data['updated_on'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
                 UserDetails.objects.filter(user_id = user_id).update(**user_details_data)
-                logger.info("User Updated Successfully")
+                logger.info('Successfully updated user information')
             else:
                 logger.info("Creating user details")
                 user_data['created_on'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
@@ -156,7 +161,7 @@ def addUser(request):
             response_body = {
             'status': SUCCESSSTATUS,
             'success': "true",
-            'message': "Record found.",
+            # 'message': "Record found.",
             'data': data
             }
                 
@@ -253,6 +258,7 @@ def userLogin(request):
                                     ud.phone,
                                     ud.joining_date,
                                     ud.profile_pic,
+                                    ud.org_id,
                                     ud.designation,
                                     dl.domain_value AS  user_role
                                 FROM user u 
@@ -275,6 +281,7 @@ def userLogin(request):
                     joining_date = user_value[0]['joining_date']
                     profile_pic = user_value[0]['profile_pic']
                     designation = user_value[0]['designation']
+                    org_id = user_value[0]['org_id']
                     
                     
                 input_md5_password = getMd5Hash(password)
@@ -289,7 +296,7 @@ def userLogin(request):
                 refresh = RefreshToken.for_user(User.objects.get(user_id=user_id))
                 access_token = str(refresh.access_token)
                 
-                user_info = {"id":user_id, "name": user_name,"username":username ,"phone":user_phone,"email":user_email,'user_role':user_role, "profile_pic":profile_pic,"joining_date":joining_date,"designation":designation, "access_token": access_token,"refresh_token": str(refresh)}
+                user_info = {"id":user_id, "name": user_name,"username":username ,"phone":user_phone,"email":user_email,'user_role':user_role,"org_id":org_id, "profile_pic":profile_pic,"joining_date":joining_date,"designation":designation, "access_token": access_token,"refresh_token": str(refresh)}
                 
                 response_body= {
                     'status': SUCCESSSTATUS,
@@ -338,4 +345,161 @@ def userLogin(request):
         ek.append(MESSAGE)
         errordisplay[3].append(dict(zip(ek,ec)))
         return Response ({ERROR:dict(zip(errorkeys,errordisplay))})
+    
+@api_view(['POST'])
+def userView(request):
+    errorkeys = ['Info','Business_Errors','Warnings','System_Errors']
+    errordisplay = [[],[],[],[]]
+    ec = []
+    ek = []
+    logger.info("<======================== Start - User List ========================>")
+    try:
+        data = request.data
+        logger.info(f"Requested Data = {data}")
+        user_id  = data['user_id'] if data.get('user_id') else None
+        
+        if user_id  in ('' ,None):
+            raise MandatoryInputMissingException("User Id Missing")
+        else:
+            user_id_exist = User.objects.filter(user_id=user_id,active=1).exists()
+            if user_id_exist:
+                user_details = UserDetails.objects.filter(user_id=user_id).first()
+                user_role = DomainLookup.objects.filter(domain_code=user_details.user_role, domain_type='user_type').first()
+                user_info = {
+                        "user_id": user_details.user_id,
+                        "firstname": user_details.firstname,
+                        "lastname": user_details.lastname,
+                        "email": user_details.email,
+                        "phone": user_details.phone,
+                        "user_role": user_role.domain_value,
+                        "profile_pic": user_details.profile_pic,
+                        "designation": user_details.designation,
+                        "salary": user_details.salary,
+                        "joining_date": user_details.joining_date,
+                        "created_on": user_details.created_on,
+                        "updated_on": user_details.updated_on
+                    }
+                logger.info("User details fetched successfully")
+                response_body= {
+                    'status': SUCCESSSTATUS,
+                    'success': "true",
+                    'message': "Record found.",
+                    'data': user_info
+                }
+                return Response(response_body)
+            else:
+                raise UserNotExistsException("User Doesn't Exists")
+    except MandatoryInputMissingException as mime:
+        logger.exception(mime)
+        ec.append(BE001)
+        ec.append(BE001MESSAGE)
+        ek.append(CODE)
+        ek.append(MESSAGE)
+        errordisplay[1].append(dict(zip(ek,ec)))
+        return Response ({ERROR:dict(zip(errorkeys,errordisplay))})
+     
+    except UserNotExistsException as une:
+        logger.exception(une)
+        ec.append(IN002)
+        ec.append(IN002MESSAGE)
+        ek.append(CODE)
+        ek.append(MESSAGE)
+        errordisplay[0].append(dict(zip(ek,ec)))
+        return Response ({ERROR:dict(zip(errorkeys,errordisplay))}) 
+      
+    except UserNotAuthorized as una:
+        logger.exception(una)
+        ec.append(IN003)
+        ec.append(IN003MESSAGE)
+        ek.append(CODE)
+        ek.append(MESSAGE)
+        errordisplay[0].append(dict(zip(ek,ec)))
+        return Response ({ERROR:dict(zip(errorkeys,errordisplay))})   
+        
+    except Exception as e:
+        logger.exception(e)
+        ec.append(SE001)
+        ec.append(SE001MESSAGE)
+        ek.append(CODE)
+        ek.append(MESSAGE)
+        errordisplay[3].append(dict(zip(ek,ec)))
+        return Response ({ERROR:dict(zip(errorkeys,errordisplay))})
+    
+    
+@api_view(['POST'])
+def userList(request):
+    errorkeys = ['Info','Business_Errors','Warnings','System_Errors']
+    errordisplay = [[],[],[],[]]
+    ec = []
+    ek = []
+    logger.info("<======================== Start - User List ========================>")
+    try:
+        data = request.data
+        logger.info(f"Requested Data = {data}")
+        user_id = data.get('user_id')
+        org_id = data.get('org_id')
+        
+        if user_id in (None, ''):
+            raise MandatoryInputMissingException("User Id Missing")
+        if org_id in (None, ''):
+            raise MandatoryInputMissingException("Organization Id Missing")
+        
+        user_id_exist = User.objects.filter(user_id=user_id, active=1).exists()
+        if user_id_exist:
+            user_details = UserDetails.objects.filter(user_id=user_id).first()
+            if user_details:
+                user_role = user_details.user_role
+                if user_role not in (1, 2): 
+                    raise UserNotAuthorized("User not authorized to perform this action")
+                
+                users_in_org = UserDetails.objects.filter(org_id=org_id)
+                serialized_users = UserDetailsSerializer(users_in_org, many=True).data
+                logger.info("User list fetched successfully")
+                response_body= {
+                'status': SUCCESSSTATUS,
+                'success': "true",
+                'message': "Record found.",
+                'data': serialized_users
+                }
+                return Response(response_body)
+            else:
+                raise UserNotExistsException("User doesn't exist")
+        else:
+            raise UserNotExistsException("User doesn't exist")
+    
+    except MandatoryInputMissingException as mime:
+        logger.exception(mime)
+        ec.append("BE001")
+        ec.append("Mandatory input missing")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[1].append(dict(zip(ek, ec)))
+        return Response({ERROR: dict(zip(errorkeys, errordisplay))})
+     
+    except UserNotExistsException as une:
+        logger.exception(une)
+        ec.append("IN002")
+        ec.append("User doesn't exist")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[0].append(dict(zip(ek, ec)))
+        return Response({ERROR: dict(zip(errorkeys, errordisplay))}) 
+      
+    except UserNotAuthorized as una:
+        logger.exception(una)
+        ec.append("IN003")
+        ec.append("User not authorized to perform this action")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[0].append(dict(zip(ek, ec)))
+        return Response({ERROR: dict(zip(errorkeys, errordisplay))})   
+        
+    except Exception as e:
+        logger.exception(e)
+        ec.append("SE001")
+        ec.append("An unexpected error occurred")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[3].append(dict(zip(ek, ec)))
+        return Response({ERROR: dict(zip(errorkeys, errordisplay))})
     

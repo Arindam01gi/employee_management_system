@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"username\":\"arindam\",\r\n    \"user_role\":1,\r\n    \"password\":\"Arindam123@\",\r\n    \"firstname\": \"Arindam\",\r\n    \"lastname\":\"Maiti\",\r\n    \"email\":\"arindam@gmail.com\",\r\n    \"phone\":\"3636362626\"\r\n}",
+					"raw": "{\r\n    \"username\":\"Jhon\",\r\n    \"user_role\":2,\r\n    \"password\":\"Jhon123@\",\r\n    \"firstname\": \"Jhon\",\r\n    \"lastname\":\"Doe\",\r\n    \"email\":\"JhonDoe@gmail.com\",\r\n    \"phone\":\"1234567899\",\r\n    \"profile_pic\":\"./profile_pic1\",\r\n    \"salary\": 10000,\r\n    \"joining_date\":\"2024-06-02\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -68,6 +68,40 @@
 						"emp",
 						"user",
 						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/emp/user/view/",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"user_id\":2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/emp/user/view/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"emp",
+						"user",
+						"view",
 						""
 					]
 				}

@@ -32,3 +32,7 @@ class InvalidCredentialException(Exception):
     def __init___(self, message):
         super(InvalidCredentialException, self).__init__(message)
         self.message = message
+class UserNotAuthorized(Exception):
+    def __init___(self, message):
+        super(UserNotAuthorized, self).__init__(message)
+        self.message = message
