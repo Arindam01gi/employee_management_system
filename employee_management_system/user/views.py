@@ -503,3 +503,101 @@ def userList(request):
         errordisplay[3].append(dict(zip(ek, ec)))
         return Response({ERROR: dict(zip(errorkeys, errordisplay))})
     
+
+
+@api_view(['POST'])
+def userDelete(request):
+    errorkeys = ['Info', 'Business_Errors', 'Warnings', 'System_Errors']
+    errordisplay = [[], [], [], []]
+    ec = []
+    ek = []
+    logger.info("<======================== Start - User Delete========================>")
+    
+    try:
+        data = request.data
+        logger.info(f"Requested Data = {data}")
+        user_id = data.get('user_id')
+        # org_id = data.get('org_id')
+        user_id_to_delete = data.get('user_id_to_delete')
+        
+        if user_id in (None, ''):
+            raise MandatoryInputMissingException("User Id Missing")
+        # if org_id in (None, ''):
+        #     raise MandatoryInputMissingException("Organization Id Missing")
+        if user_id_to_delete in (None, ''):
+            raise MandatoryInputMissingException("User id to delete is missing")
+        
+        user_org_id = UserDetails.objects.filter(user_id=user_id).values_list('org_id', flat=True).first()
+        user_to_delete_org_id = UserDetails.objects.filter(user_id=user_id_to_delete).values_list('org_id', flat=True).first()
+        
+        if user_org_id != user_to_delete_org_id:
+            raise UserNotAuthorized("Users do not belong to the same organization")
+        
+        # Check if user_id exists and has sufficient permissions
+        user_id_exist = User.objects.filter(user_id=user_id, active=1).exists()
+        if not user_id_exist:
+            raise UserNotExistsException("User doesn't exist or is inactive")
+        
+        user_details = UserDetails.objects.filter(user_id=user_id).first()
+        if not user_details:
+            raise UserNotExistsException("User details not found")
+        
+        user_role = user_details.user_role
+        if user_role not in (1, 2): 
+            raise UserNotAuthorized("User not authorized to perform this action")
+        
+        user_id_to_delete_exist = User.objects.filter(user_id=user_id_to_delete, active=1).exists()
+        if not user_id_to_delete_exist:
+            raise UserNotExistsException("User to be deleted doesn't exist or is inactive")
+        
+        user_data = {
+            "active": 0,
+            "updated_on": datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        User.objects.filter(user_id=user_id_to_delete).update(**user_data)
+        logger.info("User deleted successfully")
+        
+        response_body = {
+            'status': 'success',
+            'success': True,
+            'message': 'User deleted successfully.'
+        }
+        return Response(response_body)
+    
+    except MandatoryInputMissingException as mime:
+        logger.exception(mime)
+        ec.append("BE001")
+        ec.append("Mandatory input missing")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[1].append(dict(zip(ek, ec)))
+        return Response({'ERROR': dict(zip(errorkeys, errordisplay))})
+     
+    except UserNotExistsException as une:
+        logger.exception(une)
+        ec.append("IN002")
+        ec.append("User doesn't exist or is inactive")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[0].append(dict(zip(ek, ec)))
+        return Response({'ERROR': dict(zip(errorkeys, errordisplay))})
+      
+    except UserNotAuthorized as una:
+        logger.exception(una)
+        ec.append("IN003")
+        ec.append("User not authorized to perform this action")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[0].append(dict(zip(ek, ec)))
+        return Response({'ERROR': dict(zip(errorkeys, errordisplay))})
+        
+    except Exception as e:
+        logger.exception(e)
+        ec.append("SE001")
+        ec.append("An unexpected error occurred")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[3].append(dict(zip(ek, ec)))
+        return Response({'ERROR': dict(zip(errorkeys, errordisplay))})
+
+    
