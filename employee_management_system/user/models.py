@@ -1,3 +1,4 @@
+# type: ignore
 from django.db import models
 
 # Create your models here.
@@ -24,7 +25,7 @@ class User(models.Model):
 class UserDetails(models.Model):
     user_dtls_id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User,related_name='user1',on_delete=models.CASCADE)
-    org = models.ForeignKey(Organization, default=1,related_name='organization1',on_delete=models.CASCADE)
+    org = models.ForeignKey(Organization, default=1,related_name='organization1',on_delete=models.CASCADE) 
     firstname = models.CharField(max_length=50,blank=False,null=True)
     lastname = models.CharField(max_length=50,blank=False,null=True)
     email = models.CharField(max_length=100,blank=False,null=True)
@@ -40,6 +41,30 @@ class UserDetails(models.Model):
     class Meta:
         managed = True
         db_table = 'user_details'
+        
+        
+class Post (models.Model):
+    post_id = models.BigIntegerField(primary_key=True)
+    description = models.CharField(max_length=1024,blank=False,null=True)
+    # doc_loaction = models.CharField(max_length=512,blank=False,null=True)
+    user = models.ForeignKey(User,related_name='user2',on_delete=models.CASCADE)
+    created_on = models.DateTimeField(blank=False,null=True)
+    updated_on = models.DateTimeField(blank=False,null=True)
+    
+    class Meta:
+        managed = True
+        db_table = 'post'
+class PostDoc(models.Model):
+    post_doc_id = models.BigIntegerField(primary_key=True)
+    post_id =  models.ForeignKey(Post,related_name='post',on_delete=models.CASCADE)
+    post_doc_name = models.CharField(max_length=256,blank=False,null=True)
+    post_doc_path = models.CharField(max_length=256,blank=False,null=True)
+    doc_type = models.CharField(max_length=50,blank=False,null=True)
+    created_on = models.DateTimeField()
+    
+    class Meta:
+        managed = True
+        db_table = 'post_doc'
         
 
     

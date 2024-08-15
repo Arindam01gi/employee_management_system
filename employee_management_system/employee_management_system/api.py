@@ -9,6 +9,7 @@ urls = [
     path('user/view/',userView),
     path('user/list/',userList),
     path('user/delete/',userDelete),
+    path('user/create_post/',createPost)
     
 
 ]

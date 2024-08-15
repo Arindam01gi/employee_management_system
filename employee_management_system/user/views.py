@@ -1,3 +1,4 @@
+# type: ignore
 from rest_framework import viewsets, request
 from rest_framework.decorators import action, api_view
 from django.http import HttpResponse
@@ -14,7 +15,7 @@ from errors import *
 from .utils import (getMd5Hash)
 from .models import (UserDetails,User)
 from shared.models import (DomainLookup)
-from .serializers import UserDetailsSerializer
+from .serializers import UserDetailsSerializer,PostSerializer
 
 import logging, re, dateutil, hashlib, base64, pytz, math, mimetypes
 import json, sys
@@ -270,7 +271,7 @@ def userLogin(request):
                 if query is not None:
                     cursor = connection.cursor()
                     cursor.execute(query)
-                    cols = [col[0] for col in cursor.description]
+                    cols = [col[0] for col in cursor.description] 
                     user_value = [dict(zip(cols,row)) for row in cursor.fetchall()]
                     user_md5_password = user_value[0]['password']
                     user_id = user_value[0]['user_id']
@@ -369,7 +370,7 @@ def userView(request):
                         "user_id": user_details.user_id,
                         "firstname": user_details.firstname,
                         "lastname": user_details.lastname,
-                        "email": user_details.email,
+                        "email": user_details.email, 
                         "phone": user_details.phone,
                         "user_role": user_role.domain_value,
                         "profile_pic": user_details.profile_pic,
@@ -600,4 +601,60 @@ def userDelete(request):
         errordisplay[3].append(dict(zip(ek, ec)))
         return Response({'ERROR': dict(zip(errorkeys, errordisplay))})
 
+
+@api_view(['POST'])
+def createPost(request):
+    errorkeys = ['Info', 'Business_Errors', 'Warnings', 'System_Errors']
+    errordisplay = [[], [], [], []]
+    ec = []
+    ek = []
+    logger.info("<======================== Start - Post Create========================>")
+    try:
+        data = request.data
+        logger.info(f"data-{data}")
+        user_id = data.get('user_id')
+        user_id_exist = User.objects.filter(user_id=user_id, active=1).exists()
+        
+        if user_id_exist:
+            serializer = PostSerializer(data=request.data)
+            if serializer.is_valid():
+                post = serializer.save()
+                response_body ={
+                    'status': SUCCESSSTATUS,
+                    'success': "true",
+                    'data': PostSerializer(post).data
+                }
+                return Response(response_body)
+            else:
+                error_response = {}
+                for field, errors in serializer.errors.items():
+                    error_response[field] = errors[0]
+                ec.append("BE001")
+                ec.append("Invalid request data")
+                ek.append("CODE")
+                ek.append("MESSAGE")
+                errordisplay[1].append(dict(zip(ek, ec)))
+                errordisplay[1].append(error_response)
+                return Response({ERROR: dict(zip(errorkeys, errordisplay))})
+        else:
+            raise UserNotExistsException("User doesn't exist")
+    except UserNotExistsException as une:
+        logger.exception(une)
+        ec.append("IN002")
+        ec.append("User doesn't exist")
+        ek.append("CODE")
+        ek.append("MESSAGE")
+        errordisplay[0].append(dict(zip(ek, ec)))
+        return Response({ERROR: dict(zip(errorkeys, errordisplay))})
+            
+    except Exception as e:
+        logger.exception(e)
+        ec.append(SE001)
+        ec.append(SE001MESSAGE)
+        ek.append(CODE)
+        ek.append(MESSAGE)
+        errordisplay[3].append(dict(zip(ek,ec)))
+        return Response ({ERROR:dict(zip(errorkeys,errordisplay))})
+        
+    
     
